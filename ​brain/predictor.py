@@ -1,26 +1,40 @@
-"""
-FSE Prediction Engine
-Alpha Coin Market Predictor
-"""
+import numpy as np
+from sklearn.linear_model import LogisticRegression
 
-
-class Predictor:
+class AIBrain:
     def __init__(self):
-        self.min_confidence = 40
-        self.target_volatility = 15
+        self.model = LogisticRegression()
+        self.trained = False
 
-    def analyze_market(self, coin, volatility, confidence):
-        result = {
-            "coin": coin,
-            "volatility": volatility,
-            "confidence": confidence,
-            "trade_allowed": False
-        }
+    def train(self):
+        X, y = [], []
 
-        if confidence >= self.min_confidence:
-            result["trade_allowed"] = True
+        for _ in range(1000):
+            price_change = np.random.uniform(-3, 3)
+            volume = np.random.uniform(0, 100)
 
-        return result
+            X.append([price_change, volume])
 
-    def is_alpha_coin(self, volatility):
-        return volatility >= self.target_volatility
+            if price_change > 1 and volume > 50:
+                y.append(1)
+            elif price_change < -1 and volume > 50:
+                y.append(-1)
+            else:
+                y.append(0)
+
+        self.model.fit(X, y)
+        self.trained = True
+
+    def predict(self, data):
+        if not self.trained:
+            self.train()
+
+        X = [[data["price_change"], data["volume"]]]
+        pred = self.model.predict(X)[0]
+        prob = max(self.model.predict_proba(X)[0])
+
+        if pred == 1:
+            return "LONG", round(prob * 100, 2)
+        elif pred == -1:
+            return "SHORT", round(prob * 100, 2)
+        return "HEDGE", round(prob * 100, 2)
