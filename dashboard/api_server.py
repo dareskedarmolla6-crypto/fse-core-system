@@ -44,3 +44,4 @@ class DashboardController:
             "profit": profit_report,
             "trades": trade_history
         }
+s
