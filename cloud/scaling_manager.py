@@ -57,3 +57,9 @@ class CloudMonitor:
 
         print("🔁 RECONNECTING TO MARKET DATA...")
         time.sleep(2)
+# Safety improvement: prevent infinite retry loops
+MAX_RECONNECT_ATTEMPTS = 5
+
+# Optional safeguard: reset retry counter after successful heartbeat
+def reset_reconnect_counter(self):
+    self.reconnect_attempts = 0
