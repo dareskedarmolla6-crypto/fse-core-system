@@ -49,3 +49,12 @@ class Dashboard:
         msg += f"⚙️ Status: {status['status']}"
 
         tg.send(msg)
+# Safety improvement: prevent crash if telegram client is None
+def safe_show(self, tg, status, profit, trades, win_rate=None):
+    if tg is None:
+        return
+    return self.show(tg, status, profit, trades, win_rate)
+
+# Optional enhancement: clear trade history
+def reset_history(self):
+    self.trades = []
