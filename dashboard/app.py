@@ -103,3 +103,14 @@ if __name__ == "__main__":
         port=5000,
         debug=False
     )
+# Safety improvement: prevent negative/invalid state updates
+def safe_update_state(balance, trades, profit, status="RUNNING"):
+    balance = max(0, float(balance))
+    profit = float(profit)
+    trades = max(0, int(trades))
+    update_state(balance, trades, profit, status)
+
+# Optional safeguard: quick health endpoint helper
+@app.route("/health")
+def health():
+    return jsonify({"status": "OK"})
