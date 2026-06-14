@@ -38,3 +38,12 @@ class MarketFeed:
     def get_symbol_data(self, symbol):
         data = self.source.get_all()
         return data.get(symbol, None)
+# Safety improvement: prevent NoneType crashes when symbol missing
+def safe_get_symbol_data(self, symbol):
+    data = self.get_symbol_data(symbol)
+    return data if data is not None else {
+        "volatility": 0,
+        "volume": 0,
+        "momentum": 0,
+        "price_change": 0
+    }
