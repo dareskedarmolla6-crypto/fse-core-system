@@ -92,3 +92,35 @@ class RiskAdjuster:
         elif win_rate < 0.6:
             return {"risk": 0.02}
         return {"risk": 0.05}
+        def get_leverage(confidence, volatility=0.5, hedge=False):
+
+    # no trade zone
+    if confidence < 15:
+        return 0
+
+    # base mapping
+    if 15 <= confidence <= 25:
+        lev = 5
+    elif 26 <= confidence <= 35:
+        lev = 8
+    elif 36 <= confidence <= 55:
+        lev = 10
+    elif 56 <= confidence <= 75:
+        lev = 15
+    elif 76 <= confidence <= 85:
+        lev = 20
+    else:
+        lev = 30
+
+    # volatility adjustment (IMPORTANT)
+    if volatility > 0.8:
+        lev *= 0.7   # reduce risk in chaos market
+    elif volatility < 0.3:
+        lev *= 1.2   # increase leverage in stable market
+
+    # hedge mode safety
+    if hedge:
+        lev *= 0.6   # reduce leverage when hedging
+
+    # safety cap
+    return min(round(lev), 30)
