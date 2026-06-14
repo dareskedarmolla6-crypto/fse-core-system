@@ -81,3 +81,9 @@ class DataNormalizer:
                 market_data.get("history", [])
             )
         }
+# Safety improvement: prevent invalid numeric inputs from breaking normalization
+def safe_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
