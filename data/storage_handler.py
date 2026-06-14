@@ -80,3 +80,9 @@ class StorageHandler:
     # -------------------------
     def list_files(self):
         return os.listdir(self.base_path)
+# Safety improvement: prevent corrupted JSON crash during load
+def safe_load(self, filename):
+    try:
+        return self.load(filename)
+    except Exception:
+        return None
