@@ -52,3 +52,11 @@ class ProfitTracker:
             "drawdown": drawdown,
             "peak_balance": self.peak
         }
+# Safety improvement: prevent negative or invalid balance display
+def safe_status(self, balance, open_positions, running=True, system_error=None):
+    balance = max(0, balance)
+    return self.get_status(balance, open_positions, running, system_error)
+
+# Optional enhancement: reset peak tracker safely
+def reset_peak(self):
+    self.peak = None
