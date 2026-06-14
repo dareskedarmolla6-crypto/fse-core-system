@@ -75,3 +75,9 @@ class F44Core:
 
     def set_risk(self, level):
         self.last_risk = level
+# Safety guard: ensure monitor always tracks latest heartbeat correctly
+def update_heartbeat(self):
+    self.last_heartbeat = time.time()
+
+# Safety guard: prevent runaway restarts (basic protection)
+MAX_RESTART_ATTEMPTS = 5
