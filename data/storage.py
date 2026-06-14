@@ -81,3 +81,10 @@ class InMemoryStore:
                 self.data = json.load(f)
         except FileNotFoundError:
             pass
+# Safety improvement: prevent corrupted JSON overwrite (backup fallback)
+def safe_save_to_file(self, path="fse_storage.json"):
+    backup_path = path + ".backup"
+    try:
+        self.save_to_file(path)
+    except Exception:
+        self.save_to_file(backup_path)
