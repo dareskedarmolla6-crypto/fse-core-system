@@ -1,34 +1,41 @@
+
 # fse/strategy/mean_reversion.py
+import logging
 
+logger = logging.getLogger(__name__)
 
+# =========================
+# REVERSAL CONFIRMATION
+# =========================
 class ReversalConfirmationEngine:
-    """
-    Confirms if market reversal is valid based on:
-    trend + volume + momentum
-    """
+    """የገበያ ለውጥን (Reversal) በሶስት መለኪያዎች የሚያረጋግጥ ክፍል (መርህ #3)።"""
 
     def confirm_reversal(self, trend: bool, volume: bool, momentum: bool) -> bool:
-        return all([trend, volume, momentum])
-
+        """Trend, Volume እና Momentum ሲገጣጠሙ ብቻ Reversal ማረጋገጥ።"""
+        is_valid = all([trend, volume, momentum])
+        if is_valid:
+            logger.info("🔄 Mean Reversion: Reversal confirmed.")
+        return is_valid
 
 # =========================
 # SMART HEDGE CONTROLLER
 # =========================
 class SmartHedgeController:
-    """
-    Manages hedge positions during reversal scenarios
-    """
+    """በReversal ጊዜ የሄጅንግ ፖዚሽኖችን (Hedge Positions) የሚያስተዳድር።"""
 
-    def manage_position(self, long_position, short_position, reversal_confirmed: bool):
-
+    def manage_position(self, long_position: dict, short_position: dict, reversal_confirmed: bool):
+        """ትርፋማ ያልሆነውን ጎን በመዝጋት አደጋን መቀነስ።"""
+        
         if not reversal_confirmed:
             return "KEEP_BOTH"
 
-        long_profit = long_position.get("profit", 0)
-        short_profit = short_position.get("profit", 0)
+        long_profit = float(long_position.get("profit", 0.0))
+        short_profit = float(short_position.get("profit", 0.0))
 
-        # If reversal confirmed → close weaker side
+        # የሄጅንግ ስልት: ትርፋማውን ይዞ ትርፋማ ያልሆነውን መዝጋት
         if long_profit > short_profit:
+            logger.info("📉 Closing weaker short position.")
             return "CLOSE_SHORT"
         else:
+            logger.info("📈 Closing weaker long position.")
             return "CLOSE_LONG"
