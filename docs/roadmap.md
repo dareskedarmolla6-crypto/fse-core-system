@@ -1,98 +1,67 @@
-# FSE Trading System Architecture
 
-## Overview
-FSE (Fully Smart Execution) is a modular crypto trading bot designed for:
-- High volatility alpha coins
-- Hedge mode (LONG + SHORT simultaneously)
-- Grid trading + partial take-profit
-- Risk-aware adaptive leverage system
-- Multi-exchange execution layer
+# FSE Trading System Architecture & Roadmap
+
+## 1. Overview
+FSE (Fully Smart Execution) is a modular, AI-driven trading engine built for high-performance execution across Crypto and Forex markets.
 
 ---
 
-## Core Layers
+## 2. Core Layers Overview
 
-### 1. Brain Layer
-Responsible for generating trading signals.
-- Input: Market data
-- Output: LONG / SHORT / HEDGE / WAIT
-- Includes:
-  - AI predictor
-  - Signal confidence scoring
+### 2.1 Brain Layer (The Intelligence)
+Responsible for predictive signal generation.
+- **Modes:** LONG / SHORT / HEDGE / WAIT
+- **Mechanism:** AI-driven prediction model with confidence-based filtering.
 
----
+### 2.2 Risk Engine (The Guardian)
+Enforces safety constraints.
+- **Threshold:** Signals with < 15% confidence are blocked.
+- **Safety Triggers:** Automated block on low volatility, excessive drawdown, or emergency stops.
 
-### 2. Risk Engine
-Controls whether trades are allowed.
-
-Rules:
-- Confidence threshold must be ≥ 15%
-- System blocks trades if:
-  - Volatility too low
-  - Drawdown exceeds limit
-  - Emergency stop triggered
-
----
-
-### 3. Leverage Engine (Adaptive System)
-
-Leverage is dynamically adjusted based on confidence:
+### 2.3 Adaptive Leverage System (The Accelerator)
+Leverage is scaled dynamically to optimize risk-adjusted returns:
 
 | Confidence Range | Leverage |
-|------------------|----------|
-| 15 – 25%         | 5x       |
-| 26 – 35%         | 8x       |
-| 36 – 55%         | 10x      |
-| 56 – 75%         | 15x      |
-| 76 – 85%         | 20x      |
-| 86%+             | 30x      |
-
-Rule:
-- Below 15% → NO TRADE
-
-Optional safety layer:
-- Volatility-adjusted cap reduces leverage in unstable markets
+| :--- | :--- |
+| 15 – 25% | 5x |
+| 26 – 35% | 8x |
+| 36 – 55% | 10x |
+| 56 – 75% | 15x |
+| 76 – 85% | 20x |
+| 86%+ | 30x |
 
 ---
 
-### 4. Execution Layer
-Handles order placement:
-- Binance / Bybit / OKX / KuCoin / Gate.io / MEXC / Bitget
-- Forex MT5 brokers (OANDA, IC Markets, Exness, Pepperstone)
+## 3. Execution & Strategy
 
-Supports:
-- Market orders
-- Hedge execution
-- Grid execution
-- Partial fills
+### 3.1 Execution Layer (Connectivity)
+- **Exchanges:** Binance, Bybit, OKX, KuCoin, Gate.io, MEXC, Bitget.
+- **Forex:** MT5, OANDA, IC Markets, Pepperstone, Exness.
+- **Features:** Hedge mode, Grid execution, Partial fills, Market orders.
 
----
+### 3.2 Strategy Layer
+Logic governing trade entry and exit.
+- Trend Following, Mean Reversion, Smart Money Structure (SMS), Grid Logic.
 
-### 5. Strategy Layer
-Includes:
-- Trend following
-- Mean reversion
-- Smart money structure logic
-- Grid trading mode
-- Hedge decision logic
+### 3.3 Portfolio Layer
+- Dynamic position sizing and capital allocation across active pairs.
 
 ---
 
-### 6. Portfolio Layer
-- Position sizing
-- Capital allocation per trade
-- Risk balancing per coin
+## 4. Monitoring & Health
+- **Logging:** Real-time trade and error tracking.
+- **Analytics:** Performance tracking per strategy.
+- **Alerts:** Instant Telegram notifications.
 
 ---
 
-### 7. Monitoring Layer
-- Logs trades
-- Tracks performance
-- Handles system health checks
-- Sends alerts (Telegram)
-
----
-
-## Execution Flow
-
-Market Data → Brain → Risk Engine → Strategy → Portfolio → Execution → Exchange → Monitoring
+## 5. Execution Flow Diagram
+The system operates in a linear sequence to ensure high integrity:
+1. **Market Data** (Ingestion)
+2. **Brain** (Analysis)
+3. **Risk Engine** (Validation)
+4. **Strategy** (Methodology)
+5. **Portfolio** (Sizing)
+6. **Execution** (Order Placement)
+7. **Exchange** (Trade Settlement)
+8. **Monitoring** (Reporting)
