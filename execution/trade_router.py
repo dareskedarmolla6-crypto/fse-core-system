@@ -1,104 +1,98 @@
-# fse/execution/trade_router.py
 
+# fse/execution/trade_router.py
+import logging
+
+logger = logging.getLogger(__name__)
 
 # =========================================================
-# SIMPLE TRADE ROUTER (SMART EXECUTION ENTRY)
+# SMART TRADE ROUTER (SMART EXECUTION ENTRY)
 # =========================================================
 class TradeRouter:
+    """ምርጥ የዋጋ ምንጭ መርጦ ትዕዛዝ የሚልክ ክፍል (መርህ #6)።"""
+    
     def __init__(self, exchanges):
-        self.exchanges = exchanges  # exchange connectors dict
+        self.exchanges = exchanges  # { 'BINANCE': connector, 'BYBIT': connector }
 
     def execute_best(self, signal):
         target = self._select_best_exchange(signal)
-        return target.place_order(
-            symbol=signal["symbol"],
-            side=signal["side"],
-            qty=signal["qty"]
-        )
+        if target:
+            return target.place_order(symbol=signal["symbol"], side=signal["side"], qty=signal["qty"])
+        return None
 
     def _select_best_exchange(self, signal):
-        # Placeholder smart logic (can later include fees, liquidity, latency)
+        # ለወደፊት ፈሳሽነትን (Liquidity) እና ክፍያን (Fees) ግምት ውስጥ የሚያስገባ logic ይጨመርበታል
         return self.exchanges.get("BINANCE")
-
 
 # =========================================================
 # EXECUTION CONTROL ENGINE
 # =========================================================
 class ExecutionControlEngine:
+    """የውሳኔ አሰጣጥን ወደ ትዕዛዝ አይነት የሚቀይር።"""
+    
     def execute_trade(self, decision):
-        if decision == "WAIT":
-            return "NO_ACTION"
-
-        if decision in ["BUY", "STRONG_BUY"]:
-            return "OPEN_LONG"
-
-        if decision in ["SELL", "STRONG_SELL"]:
-            return "OPEN_SHORT"
-
-        return "NO_ACTION"
-
+        mapping = {
+            "BUY": "OPEN_LONG", "STRONG_BUY": "OPEN_LONG",
+            "SELL": "OPEN_SHORT", "STRONG_SELL": "OPEN_SHORT"
+        }
+        return mapping.get(decision, "NO_ACTION")
 
 # =========================================================
 # TAKE PROFIT ENGINE
 # =========================================================
 class TakeProfitEngine:
+    """የትርፍ መቆለፊያ ስልት (Risk-Adjusted TP)።"""
+    
     def manage_profit(self, position):
         profit = position.get("profit", 0)
         capital = position.get("capital", 1)
-
-        if profit >= 0.25 * capital:
+        
+        if profit >= (0.25 * capital):
             return "LOCK_PROFIT"
-
-        if profit >= 0.10 * capital:
+        elif profit >= (0.10 * capital):
             return "PARTIAL_TP"
-
         return "HOLD"
-
 
 # =========================================================
 # MULTI-EXCHANGE ROUTER
 # =========================================================
 class MultiExchangeRouter:
+    """በተለያዩ ልውውጦች መካከል ምርጥ ዋጋ መፈለጊያ።"""
+    
     def __init__(self, exchanges):
         self.exchanges = exchanges
 
     def best_price(self, symbol):
-        best_price = None
+        best_price = float('inf')
         best_exchange = None
 
         for name, ex in self.exchanges.items():
-            price = ex.get_price(symbol)
-
-            if best_price is None or price < best_price:
-                best_price = price
-                best_exchange = name
-
+            try:
+                price = float(ex.get_price(symbol))
+                if price < best_price:
+                    best_price = price
+                    best_exchange = name
+            except Exception as e:
+                logger.error(f"❌ Error getting price from {name}: {e}")
+        
         return best_exchange, best_price
 
     def place_order(self, symbol, side, qty):
         ex_name, price = self.best_price(symbol)
-
-        return self.exchanges[ex_name].place_order({
-            "symbol": symbol,
-            "side": side,
-            "qty": qty,
-            "price": price
-        })
-
+        if ex_name:
+            logger.info(f"🚀 Routing order to {ex_name} at {price}")
+            return self.exchanges[ex_name].place_order({
+                "symbol": symbol, "side": side, "qty": qty, "price": price
+            })
+        return None
 
 # =========================================================
 # UNIFIED MARKET CONTROLLER
 # =========================================================
 class UnifiedMarketController:
+    """የተዋሃደ የገበያ መቆጣጠሪያ።"""
+    
     def __init__(self, router):
         self.router = router
 
     def route(self, symbol, side, qty):
-        ex_name, price = self.router.best_price(symbol)
-
-        return self.router.exchanges[ex_name].place_order({
-            "symbol": symbol,
-            "side": side,
-            "qty": qty,
-            "price": price
-        })
+        return self.router.place_order(symbol, side, qty)
