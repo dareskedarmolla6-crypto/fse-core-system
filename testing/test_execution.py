@@ -1,87 +1,58 @@
+
+# fse/tests/test_execution.py
 import unittest
-import random
+from risk.risk_manager import RiskEngine, PositionSizer
 
 # =========================
-# MOCK EXECUTION (same logic as main system)
+# MOCK EXECUTION ENGINE
 # =========================
-class Execution:
+class MockExecution:
+    """የንግድ አፈጻጸምን የሚመስል (Mock) ሞጁል ለሙከራ።"""
     def __init__(self):
         self.trades = []
 
-    def open_long(self, symbol, size):
-        trade = {
-            "symbol": symbol,
-            "side": "LONG",
-            "size": size
-        }
+    def execute_trade(self, symbol, side, size):
+        trade = {"symbol": symbol, "side": side, "size": size, "status": "EXECUTED"}
         self.trades.append(trade)
         return trade
 
-    def open_short(self, symbol, size):
-        trade = {
-            "symbol": symbol,
-            "side": "SHORT",
-            "size": size
-        }
-        self.trades.append(trade)
-        return trade
-
-
 # =========================
-# SIMPLE RISK MOCK
+# TEST SUITE
 # =========================
-class RiskAI:
-    def approve_trade(self, signal, confidence):
-        return confidence >= 50, "OK"
-
-    def position_size(self, balance, confidence):
-        return balance * (confidence / 1000)
-
-
-# =========================
-# SIMPLE BRAIN MOCK
-# =========================
-class Brain:
-    def predict(self, data):
-        if data["price_change"] > 0:
-            return "LONG", 70
-        return "SHORT", 60
-
-
-# =========================
-# TEST CASES
-# =========================
-class TestExecution(unittest.TestCase):
+class TestExecutionFlow(unittest.TestCase):
+    """የንግድ አፈጻጸም ፍሰትን የሚያረጋግጡ የሙከራ ትዕዛዞች።"""
 
     def setUp(self):
-        self.execution = Execution()
-        self.risk = RiskAI()
-        self.brain = Brain()
-        self.balance = 1000
+        self.executor = MockExecution()
+        self.risk = RiskEngine(max_risk=0.02)
+        self.sizer = PositionSizer(max_risk=0.02)
+        self.balance = 1000.0
 
-    def test_open_long(self):
-        trade = self.execution.open_long("DOGEUSDT", 10)
-
-        self.assertEqual(trade["side"], "LONG")
-        self.assertEqual(trade["symbol"], "DOGEUSDT")
-        self.assertEqual(trade["size"], 10)
-
-    def test_open_short(self):
-        trade = self.execution.open_short("DOGEUSDT", 5)
-
-        self.assertEqual(trade["side"], "SHORT")
-        self.assertEqual(trade["size"], 5)
-
-    def test_trade_flow_long(self):
-        data = {"price_change": 2.5}
-
-        signal, confidence = self.brain.predict(data)
-        approved, _ = self.risk.approve_trade(signal, confidence)
-
-        size = self.risk.position_size(self.balance, confidence)
-
-        if approved and signal == "LONG":
-            trade = self.execution.open_long("DOGEUSDT", size)
-
+    def test_full_trade_flow(self):
+        """ሲግናል -> ሪስክ ፍተሻ -> አፈጻጸም ያለውን ሂደት ማረጋገጥ።"""
+        signal = "LONG"
+        confidence = 80
+        
+        # 1. ሪስክ ፍተሻ
+        size = self.sizer.calculate(self.balance, confidence)
+        approved, _ = self.risk.validate_new_position(signal, self.balance, size, [])
+        
+        # 2. አፈጻጸም
+        if approved:
+            trade = self.executor.execute_trade("DOGEUSDT", signal, size)
+            
+            # 3. ማረጋገጫ (Assertions)
             self.assertEqual(trade["side"], "LONG")
-            self.assertTrue(trade["size"] > 0)
+            self.assertEqual(trade["symbol"], "DOGEUSDT")
+            self.assertEqual(trade["size"], 16.0) # 1000 * 0.02 * 0.8
+            self.assertEqual(trade["status"], "EXECUTED")
+
+    def test_rejection_on_excessive_size(self):
+        """ከፍተኛ መጠን ያለው ንግድ መታገዱን ማረጋገጥ።"""
+        size = 500.0 # 50% risk (በጣም ከፍተኛ)
+        approved, reason = self.risk.validate_new_position("LONG", self.balance, size, [])
+        self.assertFalse(approved)
+        self.assertEqual(reason, "RISK_TOO_HIGH")
+
+if __name__ == "__main__":
+    unittest.main()
