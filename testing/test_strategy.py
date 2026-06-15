@@ -1,59 +1,40 @@
+
+# fse/tests/test_strategy.py
 import unittest
-
-
-# =========================
-# STRATEGY MODULE (mock for test)
-# =========================
-class Strategy:
-    def build(self, signal, confidence):
-        if confidence < 60:
-            return "FULL_HEDGE"
-        elif signal == "LONG":
-            return "LONG_ONLY"
-        elif signal == "SHORT":
-            return "SHORT_ONLY"
-        return "NO_TRADE"
-
+from strategy.strategy_router import StrategyRouter
 
 # =========================
 # TEST SUITE
 # =========================
-class TestStrategy(unittest.TestCase):
+class TestStrategyRouter(unittest.TestCase):
+    """የስልት መራጭ ማዕከልን (StrategyRouter) ትክክለኛነት የሚያረጋግጡ የሙከራ ትዕዛዞች።"""
 
     def setUp(self):
-        self.strategy = Strategy()
+        self.router = StrategyRouter()
 
-    # -------------------------
-    # LOW CONFIDENCE => HEDGE
-    # -------------------------
-    def test_low_confidence_returns_hedge(self):
-        result = self.strategy.build("LONG", 40)
-        self.assertEqual(result, "FULL_HEDGE")
+    def test_grid_strategy_selection(self):
+        """ከፍተኛ ቮላቲሊቲ ሲኖር GRID ስልት መመረጡን ማረጋገጥ።"""
+        market_data = {"volatility": 0.8, "trend": "NEUTRAL"}
+        strategy = self.router.select_strategy(market_data)
+        self.assertEqual(strategy, "GRID")
 
-    # -------------------------
-    # LONG SIGNAL
-    # -------------------------
-    def test_long_signal(self):
-        result = self.strategy.build("LONG", 80)
-        self.assertEqual(result, "LONG_ONLY")
+    def test_mean_reversion_selection(self):
+        """ዝቅተኛ ቮላቲሊቲ ሲኖር MEAN_REVERSION ስልት መመረጡን ማረጋገጥ።"""
+        market_data = {"volatility": 0.2, "trend": "NEUTRAL"}
+        strategy = self.router.select_strategy(market_data)
+        self.assertEqual(strategy, "MEAN_REVERSION")
 
-    # -------------------------
-    # SHORT SIGNAL
-    # -------------------------
-    def test_short_signal(self):
-        result = self.strategy.build("SHORT", 85)
-        self.assertEqual(result, "SHORT_ONLY")
+    def test_momentum_strategy_selection(self):
+        """አዝማሚያ (Trend) ወደ ላይ ሲሆን MOMENTUM ስልት መመረጡን ማረጋገጥ።"""
+        market_data = {"volatility": 0.5, "trend": "UP"}
+        strategy = self.router.select_strategy(market_data)
+        self.assertEqual(strategy, "MOMENTUM")
 
-    # -------------------------
-    # UNKNOWN SIGNAL
-    # -------------------------
-    def test_unknown_signal(self):
-        result = self.strategy.build("HOLD", 90)
-        self.assertEqual(result, "NO_TRADE")
+    def test_default_alpha_selection(self):
+        """ምንም ግልጽ ሁኔታ በሌለበት ጊዜ ALPHA ስልት መመረጡን ማረጋገጥ።"""
+        market_data = {"volatility": 0.5, "trend": "DOWN"}
+        strategy = self.router.select_strategy(market_data)
+        self.assertEqual(strategy, "ALPHA")
 
-
-# =========================
-# RUN TESTS
-# =========================
 if __name__ == "__main__":
     unittest.main()
