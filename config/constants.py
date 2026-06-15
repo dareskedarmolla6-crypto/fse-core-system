@@ -1,31 +1,18 @@
 # =====================================================
-# FSE GLOBAL CONSTANTS
+# FSE GLOBAL CONSTANTS (CORE SYSTEM CONFIG)
 # =====================================================
 
-# =========================
-# SYSTEM SETTINGS
-# =========================
-
+# System Settings
 BOT_NAME = "FSE"
-BOT_VERSION = "1.0"
+BOT_VERSION = "2.0.0" # አዘምነነዋል
+SCAN_INTERVAL_SECONDS = 180   # 3 ደቂቃ (መርህ #6)
 
-SCAN_INTERVAL_SECONDS = 180   # 3 minutes
-
-
-# =========================
-# MARKET SETTINGS
-# =========================
-
+# Market Requirements
 MIN_CONFIDENCE = 15
-MIN_VOLATILITY_PERCENT = 15
+MIN_VOLATILITY_PERCENT = 15 # መርህ #4
 
-DEFAULT_SYMBOL = "DOGEUSDT"
-
-
-# =========================
-# CONFIDENCE → LEVERAGE MAP
-# =========================
-
+# Confidence → Leverage Mapping (መርህ #8)
+# (Min_Conf, Max_Conf): Leverage
 LEVERAGE_LEVELS = {
     (15, 25): 5,
     (26, 35): 8,
@@ -34,103 +21,32 @@ LEVERAGE_LEVELS = {
     (76, 85): 20,
     (86, 100): 30
 }
+MAX_LEVERAGE = 35 # የቦትህን ከፍተኛ አቅም መሰረት ያደረገ
 
-MAX_LEVERAGE = 30
-
-
-# =========================
-# TRADING MODES
-# =========================
-
-LONG = "LONG"
-SHORT = "SHORT"
-HEDGE = "HEDGE"
-GRID = "GRID"
-
+# Trading Modes
+LONG, SHORT, HEDGE, GRID = "LONG", "SHORT", "HEDGE", "GRID"
 NO_TRADE = "NO_TRADE"
 
-
-# =========================
-# RISK MANAGEMENT
-# =========================
-
+# Risk Management
 STOP_LOSS_ENABLED = True
-
 TRAILING_STOP_ENABLED = True
 TRAILING_ACTIVATION_PERCENT = 0.05
 TRAILING_DISTANCE_PERCENT = 0.02
-
 PARTIAL_TAKE_PROFIT_ENABLED = True
-PARTIAL_TP_PERCENT = 0.10
-
+PARTIAL_TP_PERCENT = 0.10 # መርህ #5 (Grid System/Partial Selling)
 PROFIT_LOCK_ENABLED = True
 PROFIT_LOCK_PERCENT = 0.25
 
+# Market/Exchange Support (መርህ #10)
+CRYPTO_EXCHANGES = ["BINANCE", "BYBIT", "OKX", "KUCOIN", "GATE_IO", "MEXC", "BITGET"]
+FOREX_BROKERS = ["MT5", "OANDA", "IC_MARKETS", "PEPPERSTONE", "EXNESS"]
 
-# =========================
-# EXCHANGE SUPPORT
-# =========================
+# System States
+SYSTEM_RUNNING, SYSTEM_STOPPED, SYSTEM_EMERGENCY = "RUNNING", "STOPPED", "EMERGENCY"
 
-CRYPTO_EXCHANGES = [
-    "BINANCE",
-    "BYBIT",
-    "OKX",
-    "KUCOIN",
-    "GATE_IO",
-    "MEXC",
-    "BITGET"
-]
+# Order States
+ORDER_CREATED, ORDER_OPEN, ORDER_FILLED, ORDER_CLOSED, ORDER_FAILED = \
+    "CREATED", "OPEN", "FILLED", "CLOSED", "FAILED"
 
-
-FOREX_BROKERS = [
-    "MT5",
-    "OANDA",
-    "IC_MARKETS",
-    "PEPPERSTONE",
-    "EXNESS"
-]
-
-
-# =========================
-# FUTURE MARKET EXPANSION
-# =========================
-
-COMMODITIES = [
-    "GOLD",
-    "SILVER",
-    "OIL"
-]
-
-INDICES_ENABLED = True
-STOCKS_ENABLED = True
-
-
-# =========================
-# SYSTEM STATES
-# =========================
-
-SYSTEM_RUNNING = "RUNNING"
-SYSTEM_STOPPED = "STOPPED"
-SYSTEM_EMERGENCY = "EMERGENCY"
-
-
-# =========================
-# ORDER STATES
-# =========================
-
-ORDER_CREATED = "CREATED"
-ORDER_OPEN = "OPEN"
-ORDER_FILLED = "FILLED"
-ORDER_CLOSED = "CLOSED"
-ORDER_FAILED = "FAILED"
-
-
-# =========================
-# LOG LEVELS
-# =========================
-
-LOG_INFO = "INFO"
-LOG_WARNING = "WARNING"
-LOG_ERROR = "ERROR"
-# fallback symbol (used only when no market scanner selection exists)
-DEFAULT_SYMBOL = "DOGEUSDT"
+# Default Symbol
+DEFAULT_SYMBOL = "BTCUSDT" # DOGEUSDT ተለዋዋጭ ስለሆነ BTCUSDT ለጅምር ይሻላል
