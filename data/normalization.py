@@ -1,89 +1,69 @@
+
+# fse/data/normalization.py
 import math
+import logging
 
+logger = logging.getLogger(__name__)
 
-# =========================
-# NORMALIZATION ENGINE
-# =========================
 class DataNormalizer:
+    """የገበያ መረጃዎችን ለቦቱ ስልተ-ቀመር የሚያዘጋጅ (መርህ #3 & #4)።"""
+
     def __init__(self):
         self.min_max_cache = {}
 
-    # -------------------------
-    # SIMPLE MIN-MAX NORMALIZATION
-    # -------------------------
+    def safe_float(self, value):
+        """የተሳሳተ መረጃ (None/String) ሲመጣ ስህተት እንዳይፈጠር መከላከል (Safety Guard)።"""
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
     def min_max(self, value, min_val, max_val):
+        value = self.safe_float(value)
         if max_val == min_val:
             return 0.0
         return (value - min_val) / (max_val - min_val)
 
-    # -------------------------
-    # Z-SCORE NORMALIZATION
-    # -------------------------
     def z_score(self, value, mean, std):
+        value = self.safe_float(value)
         if std == 0:
             return 0.0
         return (value - mean) / std
 
-    # -------------------------
-    # PRICE CHANGE NORMALIZATION
-    # (IMPORTANT FOR FSE SIGNALS)
-    # -------------------------
     def normalize_price_change(self, price_change):
-        # clamp extreme values
-        if price_change > 10:
-            price_change = 10
-        if price_change < -10:
-            price_change = -10
+        """ዋጋን በ -1 እና 1 መካከል ማመጣጠን።"""
+        price_change = self.safe_float(price_change)
+        return max(-1.0, min(1.0, price_change / 10.0))
 
-        # scale to -1 to 1 range
-        return price_change / 10
-
-    # -------------------------
-    # VOLUME NORMALIZATION
-    # -------------------------
     def normalize_volume(self, volume, max_volume=1000):
+        """ቮሊዩምን መደበኛ ማድረግ (ከፍተኛው 1.0)።"""
+        volume = self.safe_float(volume)
         return min(volume / max_volume, 1.0)
 
-    # -------------------------
-    # VOLATILITY SCORE
-    # -------------------------
     def volatility_score(self, price_changes):
-        if not price_changes:
+        """የገበያ መዋዠቅን ማስላት (Standard Deviation)።"""
+        if not price_changes or len(price_changes) == 0:
             return 0.0
+        
+        data = [self.safe_float(x) for x in price_changes]
+        avg = sum(data) / len(data)
+        variance = sum((x - avg) ** 2 for x in data) / len(data)
+        return math.sqrt(variance) / 10.0 
 
-        avg = sum(price_changes) / len(price_changes)
-
-        variance = sum((x - avg) ** 2 for x in price_changes) / len(price_changes)
-
-        return math.sqrt(variance) / 10  # scaled
-
-    # -------------------------
-    # FULL FEATURE PACK
-    # -------------------------
     def build_features(self, market_data):
-        """
-        input:
-            {
-                "price_change": float,
-                "volume": float,
-                "history": [float]
+        """ለአልጎሪዝም የሚያስፈልጉ መለኪያዎችን ማዘጋጀት።"""
+        try:
+            return {
+                "price_change_norm": self.normalize_price_change(
+                    market_data.get("price_change", 0)
+                ),
+                "volume_norm": self.normalize_volume(
+                    market_data.get("volume", 0)
+                ),
+                "volatility": self.volatility_score(
+                    market_data.get("history", [])
+                )
             }
-        """
-
-        return {
-            "price_change_norm": self.normalize_price_change(
-                market_data.get("price_change", 0)
-            ),
-            "volume_norm": self.normalize_volume(
-                market_data.get("volume", 0)
-            ),
-            "volatility": self.volatility_score(
-                market_data.get("history", [])
-            )
-        }
-# Safety improvement: prevent invalid numeric inputs from breaking normalization
-def safe_float(value):
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0
+        except Exception as e:
+            logger.error(f"❌ Feature build error: {e}")
+            return {"price_change_norm": 0, "volume_norm": 0, "volatility": 0}
