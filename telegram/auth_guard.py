@@ -1,36 +1,32 @@
-# fse/telegram/auth_guard.py
 
+# fse/telegram/auth_guard.py
+import logging
 from fse.config.env_config import EnvConfig
 
+logger = logging.getLogger(__name__)
 
 class AuthGuard:
-    """
-    Simple Telegram authorization guard.
-    Supports single or multiple authorized users.
-    """
-
+    """የቴሌግራም ተጠቃሚዎችን የማረጋገጥ እና የመዳረሻ መብት አስተዳዳሪ (መርህ #11)።"""
+    
     def __init__(self):
-        # Support both single ID or list of IDs
         self.authorized_users = self._normalize_users()
 
     def _normalize_users(self):
-        auth = EnvConfig.AUTHORIZED_USER
-
+        """የተፈቀደላቸውን ተጠቃሚዎች ዝርዝር ማዘጋጀት።"""
+        auth = getattr(EnvConfig, 'AUTHORIZED_USER', [])
         if isinstance(auth, list):
-            return set(str(x) for x in auth)
-
+            return set(str(user_id) for user_id in auth)
         return {str(auth)}
 
     def is_authorized(self, user_id: int | str) -> bool:
-        """
-        Check if Telegram user is allowed to use bot.
-        """
-        return str(user_id) in self.authorized_users
+        """ተጠቃሚው መዳረሻ እንዳለው ያረጋግጣል።"""
+        authorized = str(user_id) in self.authorized_users
+        if not authorized:
+            logger.warning(f"🚫 Unauthorized access attempt by: {user_id}")
+        return authorized
 
     def require_auth(self, user_id: int | str):
-        """
-        Raise exception if user is not authorized.
-        Useful for strict command protection.
-        """
+        """መዳረሻ ለሌለው ተጠቃሚ ጥብቅ ክልከላ ማድረግ።"""
         if not self.is_authorized(user_id):
-            raise PermissionError("❌ Unauthorized user access blocked")
+            logger.error(f"🔒 Access DENIED for: {user_id}")
+            raise PermissionError("❌ Unauthorized user access blocked.")
